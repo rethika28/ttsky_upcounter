@@ -25,13 +25,14 @@ async def test_upcounter(dut):
     await Timer(10, units="ns")
     dut.rst_n.value = 1
 
-    # Wait for reset to settle
+    # Wait 2 clock cycles (IMPORTANT FIX)
+    await RisingEdge(dut.clk)
     await RisingEdge(dut.clk)
 
-    # Enable
+    # Enable counter
     dut.ui_in.value = 1
 
-    # Start checking
+    # Now start checking
     expected = 0
 
     for i in range(10):
@@ -40,17 +41,17 @@ async def test_upcounter(dut):
         expected = (expected + 1) % 16
         count = dut.uo_out.value.integer & 0xF
 
-        print(f"Cycle {i}: expected={expected}, got={count}")
+        dut._log.info(f"Cycle {i}: expected={expected}, got={count}")
 
-        assert count == expected
+        assert count == expected, f"Mismatch at cycle {i}"
 
-    # Disable
+    # Disable and check hold
     dut.ui_in.value = 0
     prev = dut.uo_out.value.integer & 0xF
 
     for _ in range(3):
         await RisingEdge(dut.clk)
         count = dut.uo_out.value.integer & 0xF
-        assert count == prev
+        assert count == prev, "Counter changed when disabled"
 
-    print("PASS ✅")
+    dut._log.info("PASS ✅")
