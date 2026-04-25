@@ -11,11 +11,10 @@ module tt_um_upcounter (
     input  wire       rst_n
 );
 
-    wire en = ui_in[0];   // enable
+    wire en = ui_in[0];
 
     reg [3:0] count;
 
-    // Sequential logic
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n)
             count <= 4'b0000;
@@ -23,10 +22,8 @@ module tt_um_upcounter (
             count <= count + 1;
     end
 
-    // Output mapping
     assign uo_out = {4'b0000, count};
 
-    // Unused IO
     assign uio_out = 8'b0;
     assign uio_oe  = 8'b0;
 
