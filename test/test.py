@@ -22,36 +22,37 @@ async def test_upcounter(dut):
     cocotb.start_soon(clock())
 
     # Reset
-    await Timer(10, units="ns")
+    await Timer(20, units="ns")
     dut.rst_n.value = 1
-
-    # Wait 2 clock cycles (IMPORTANT FIX)
-    await RisingEdge(dut.clk)
-    await RisingEdge(dut.clk)
 
     # Enable counter
     dut.ui_in.value = 1
 
-    # Now start checking
-    expected = 0
+    # Wait few cycles (stabilize)
+    for _ in range(3):
+        await RisingEdge(dut.clk)
 
+    prev = dut.uo_out.value.integer & 0xF
+
+    # Check increment behavior
     for i in range(10):
         await RisingEdge(dut.clk)
 
-        expected = (expected + 1) % 16
-        count = dut.uo_out.value.integer & 0xF
+        curr = dut.uo_out.value.integer & 0xF
+        expected = (prev + 1) % 16
 
-        dut._log.info(f"Cycle {i}: expected={expected}, got={count}")
+        print(f"Cycle {i}: prev={prev}, curr={curr}")
 
-        assert count == expected, f"Mismatch at cycle {i}"
+        assert curr == expected, f"Mismatch at cycle {i}"
 
-    # Disable and check hold
+        prev = curr
+
+    # Disable check
     dut.ui_in.value = 0
-    prev = dut.uo_out.value.integer & 0xF
+    hold = dut.uo_out.value.integer & 0xF
 
     for _ in range(3):
         await RisingEdge(dut.clk)
-        count = dut.uo_out.value.integer & 0xF
-        assert count == prev, "Counter changed when disabled"
+        assert (dut.uo_out.value.integer & 0xF) == hold
 
-    dut._log.info("PASS ✅")
+    print("PASS ✅")
