@@ -1,6 +1,6 @@
 `default_nettype none
 
-module tt_um_counter (
+module tt_um_upcounter (
     input  wire [7:0] ui_in,
     output wire [7:0] uo_out,
     input  wire [7:0] uio_in,
@@ -11,23 +11,19 @@ module tt_um_counter (
     input  wire       rst_n
 );
 
-    wire en  = ui_in[0];
-    wire dir = ui_in[1]; // 1 = up, 0 = down
+    wire en = ui_in[0];   // enable
 
     reg [3:0] count;
 
+    // Sequential logic
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n)
-            count <= 0;
-        else if (en) begin
-            if (dir)
-                count <= count + 1;
-            else
-                count <= count - 1;
-        end
+            count <= 4'b0000;
+        else if (en)
+            count <= count + 1;
     end
 
-    // Output
+    // Output mapping
     assign uo_out = {4'b0000, count};
 
     // Unused IO
