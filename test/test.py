@@ -40,23 +40,29 @@ async def test_upcounter(dut):
     for _ in range(3):
         await RisingEdge(dut.clk)
 
-    # EXTRA sync edge (important fix)
+    # Extra sync edge
     await RisingEdge(dut.clk)
+    await Timer(1, units="ns")
 
     prev = dut.uo_out.value.integer & 0xF
+    print(f"Initial value = {prev}")
 
     # -------------------------
     # Check increment behavior
     # -------------------------
     for i in range(10):
         await RisingEdge(dut.clk)
+        await Timer(1, units="ns")  # 🔥 important fix
 
         curr = dut.uo_out.value.integer & 0xF
         expected = (prev + 1) % 16
 
         print(f"Cycle {i}: prev={prev}, curr={curr}, expected={expected}")
 
-        assert curr == expected, f"Mismatch at cycle {i}"
+        if curr != expected:
+            print(f"❌ ERROR at cycle {i}")
+            print(f"prev={prev}, curr={curr}, expected={expected}")
+            assert False
 
         prev = curr
 
@@ -64,12 +70,21 @@ async def test_upcounter(dut):
     # Disable check
     # -------------------------
     dut.ui_in.value = 0
+    await RisingEdge(dut.clk)
+    await Timer(1, units="ns")
+
     hold = dut.uo_out.value.integer & 0xF
+    print(f"Hold value = {hold}")
 
     for i in range(3):
         await RisingEdge(dut.clk)
+        await Timer(1, units="ns")
+
         curr = dut.uo_out.value.integer & 0xF
         print(f"Hold check {i}: curr={curr}, expected={hold}")
-        assert curr == hold, "Counter changed when disabled"
+
+        if curr != hold:
+            print("❌ Counter changed when disabled")
+            assert False
 
     print("PASS ✅")
