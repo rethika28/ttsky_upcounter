@@ -18,7 +18,7 @@ module tt_um_upcounter (
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n)
             count <= 4'b0000;
-        else if (en)
+        else if (ena && en)
             count <= count + 1;
     end
 
@@ -27,6 +27,6 @@ module tt_um_upcounter (
     assign uio_out = 8'b0;
     assign uio_oe  = 8'b0;
 
-    wire _unused = &{ena, uio_in, 1'b0};
+    wire _unused = &{uio_in, 1'b0};
 
 endmodule
